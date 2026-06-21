@@ -1,4 +1,4 @@
-name: Build
+name: Build Release APK
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
     
     - name: Setup signing
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
         cat > keystore.properties << EOF
         storeFile=keystore.jks
         storePassword=${{ secrets.KEYSTORE_PASSWORD }}
@@ -73,7 +73,6 @@ jobs:
           ## XPrivacyLua ${{ steps.version.outputs.version }}
           
           **Build Date:** $(date +'%Y-%m-%d %H:%M UTC')
-          **Version Code:** $(grep 'versionCode' app/build.gradle | head -1 | grep -o '[0-9]*')
           
           ### File Hashes
           | Algorithm | Hash |
@@ -85,11 +84,10 @@ jobs:
           ### Installation
           1. Install [Magisk](https://github.com/topjohnwu/Magisk)
           2. Install [LSPosed](https://github.com/LSPosed/LSPosed) (Android 8+)
-          3. Download and install `XPrivacyLua-${{ steps.version.outputs.version }}.apk`
-          4. Open LSPosed, go to **Modules**
-          5. Enable **XPrivacyLua** module
-          6. Go to module settings, select apps to restrict in **Scope**
-          7. Reboot device
+          3. Download and install XPrivacyLua-${{ steps.version.outputs.version }}.apk
+          4. Open LSPosed → Modules → Enable XPrivacyLua
+          5. Set scope in module settings
+          6. Reboot
         files: app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
