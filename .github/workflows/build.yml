@@ -29,7 +29,7 @@ jobs:
     - name: Setup signing
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
-        cat > app/keystore.properties << EOF
+        cat > keystore.properties << EOF
         storeFile=keystore.jks
         storePassword=${{ secrets.KEYSTORE_PASSWORD }}
         keyAlias=${{ secrets.KEY_ALIAS }}
@@ -45,18 +45,51 @@ jobs:
     - name: Build APK
       run: chmod +x gradlew && ./gradlew --no-daemon clean assembleRelease
     
+    - name: Rename APK
+      run: |
+        mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk"
+    
+    - name: Get APK hashes
+      id: hashes
+      run: |
+        APK="app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk"
+        echo "md5=$(md5sum "$APK" | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+        echo "sha1=$(sha1sum "$APK" | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+        echo "sha256=$(sha256sum "$APK" | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+    
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: XPrivacyLua-NG-v${{ steps.version.outputs.version }}
-        path: app/build/outputs/apk/release/*.apk
+        name: XPrivacyLua-${{ steps.version.outputs.version }}
+        path: app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk
         retention-days: 90
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        name: "v${{ steps.version.outputs.version }}"
+        name: "XPrivacyLua ${{ steps.version.outputs.version }}"
         tag_name: "v${{ steps.version.outputs.version }}"
-        files: app/build/outputs/apk/release/*.apk
+        body: |
+          ## XPrivacyLua ${{ steps.version.outputs.version }}
+          
+          **Build Date:** $(date +'%Y-%m-%d %H:%M UTC')
+          **Version Code:** $(grep 'versionCode' app/build.gradle | head -1 | grep -o '[0-9]*')
+          
+          ### File Hashes
+          | Algorithm | Hash |
+          |-----------|------|
+          | MD5 | `${{ steps.hashes.outputs.md5 }}` |
+          | SHA-1 | `${{ steps.hashes.outputs.sha1 }}` |
+          | SHA-256 | `${{ steps.hashes.outputs.sha256 }}` |
+          
+          ### Installation
+          1. Install [Magisk](https://github.com/topjohnwu/Magisk)
+          2. Install [LSPosed](https://github.com/LSPosed/LSPosed) (Android 8+)
+          3. Download and install `XPrivacyLua-${{ steps.version.outputs.version }}.apk`
+          4. Open LSPosed, go to **Modules**
+          5. Enable **XPrivacyLua** module
+          6. Go to module settings, select apps to restrict in **Scope**
+          7. Reboot device
+        files: app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
