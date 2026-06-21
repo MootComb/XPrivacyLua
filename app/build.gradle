@@ -16,12 +16,12 @@ android {
     }
 
     defaultConfig {
-        applicationId "eu.tilltmk.xlua.ng"
+        applicationId "eu.faircode.xlua.vxp"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion 37
         versionCode 137
         versionName "1.36"
-        archivesBaseName = "XPrivacyLua-NG-v$versionName-$versionCode"
+        archivesBaseName = "XPrivacyLua-v$versionName-$versionCode"
     }
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
