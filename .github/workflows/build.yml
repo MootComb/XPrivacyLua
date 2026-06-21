@@ -3,12 +3,6 @@ name: Build Release APK
 on:
   workflow_dispatch:
     inputs:
-      release_type:
-        description: 'Release type'
-        required: true
-        default: 'patch'
-        type: choice
-        options: [patch, minor, major]
       draft:
         description: 'Create as draft'
         required: false
@@ -48,26 +42,11 @@ jobs:
         keyPassword=${{ secrets.KEY_PASSWORD }}
         EOF
     
-    - name: Set version
+    - name: Get version
       id: version
       run: |
-        CURRENT=$(grep 'versionName' app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
-        
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          case "${{ github.event.inputs.release_type }}" in
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH + 1)) ;;
-          esac
-          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          sed -i "s/versionName \".*\"/versionName \"$NEW_VERSION\"/" app/build.gradle
-          sed -i "s/versionCode [0-9]*/versionCode $(date +%s | cut -c5-10)/" app/build.gradle
-        else
-          NEW_VERSION="${GITHUB_REF_NAME#v}"
-        fi
-        
-        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        VERSION=$(grep 'versionName' app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Build APK
       run: chmod +x gradlew && ./gradlew --no-daemon clean assembleRelease
