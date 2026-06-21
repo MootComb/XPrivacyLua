@@ -3,8 +3,9 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
+
 
 jobs:
   build:
@@ -36,11 +37,12 @@ jobs:
         keyPassword=${{ secrets.KEY_PASSWORD }}
         EOF
     
-    - name: Get version
+    - name: Get version and date
       id: version
       run: |
         VERSION=$(grep 'versionName' app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "date=$(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
     
     - name: Build APK
       run: chmod +x gradlew && ./gradlew --no-daemon clean assembleRelease
@@ -70,9 +72,7 @@ jobs:
         name: "XPrivacyLua ${{ steps.version.outputs.version }}"
         tag_name: "v${{ steps.version.outputs.version }}"
         body: |
-          ## XPrivacyLua ${{ steps.version.outputs.version }}
-          
-          **Build Date:** $(date +'%Y-%m-%d %H:%M UTC')
+          **Build Date:** ${{ steps.version.outputs.date }}
           
           ### File Hashes
           | Algorithm | Hash |
@@ -82,12 +82,10 @@ jobs:
           | SHA-256 | `${{ steps.hashes.outputs.sha256 }}` |
           
           ### Installation
-          1. Install [Magisk](https://github.com/topjohnwu/Magisk)
-          2. Install [LSPosed](https://github.com/LSPosed/LSPosed) (Android 8+)
-          3. Download and install XPrivacyLua-${{ steps.version.outputs.version }}.apk
-          4. Open LSPosed → Modules → Enable XPrivacyLua
-          5. Set scope in module settings
-          6. Reboot
+          1. Download and install XPrivacyLua-${{ steps.version.outputs.version }}.apk
+          2. Open LSPosed and Vector → Modules → Enable XPrivacyLua
+          3. Set scope in module settings
+          4. Reboot
         files: app/build/outputs/apk/release/XPrivacyLua-${{ steps.version.outputs.version }}.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
