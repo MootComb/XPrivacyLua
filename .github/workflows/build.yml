@@ -34,8 +34,8 @@ jobs:
     
     - name: Setup signing
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
-        cat > keystore.properties << EOF
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
+        cat > app/keystore.properties << EOF
         storeFile=keystore.jks
         storePassword=${{ secrets.KEYSTORE_PASSWORD }}
         keyAlias=${{ secrets.KEY_ALIAS }}
